@@ -54,7 +54,13 @@ class Survey(db.Document):
                 store = []
                 for i, option in options:
                     if option.get('notify', False) is True:
-                        store.append("a_{0}".format(i + 1))
+                        val = "a_{0}".format(i + 1)
+
+                        for j in range(0, 5):
+                            if option.get("notify_{0}".format(j)):
+                                store.append("a_{0}##{1}".format(i + 1, j + 1))
+                        store.append(val)
+
                 rules[field['cid']] = store
 
         return rules
@@ -172,7 +178,8 @@ class Survey(db.Document):
     def repr(self):
         return {
             'id': str(self),
-            'name': self.metadata['name'],
+            # 'name': self.metadata['name'],
+            'ext': self.metadata.get('external', []),
             'is_gamified': self.gamified_enabled,
             'uri_simple': '/survey/s:{0}/simple'.format(str(self)),
             'uri_game': '/survey/s:{0}/gamified'.format(str(self)),
@@ -295,7 +302,7 @@ class SurveyUnit(Survey):
         return {
             'id': str(self),
             'unit_name': self.unit_name,
-            'name': self.metadata['name'],
+            # 'name': self.metadata['name'],
             'is_gamified': self.gamified_enabled,
             'uri_simple': '/survey/s:{0}/simple'.format(str(self)),
             'uri_game': '/survey/s:{0}/gamified'.format(str(self)),
@@ -362,24 +369,36 @@ class Response(db.Document):
     def __unicode__(self):
         return HashId.encode(self.id)
 
-    def add(self, qid, qres):
-        if qid in self.parent_survey.cols:
-            self.responses[qid] = qres
+    def add(self, q_id, q_res, q_res_plain,q_unit_id = None):
+        if q_id in self.parent_survey.cols:
+            self.responses[q_id] = {'raw': q_res, 'pretty': q_res_plain , 'unit_id' : q_unit_id}
             self.metadata['modified'] = datetime.datetime.now()
             self.save()
         else:
             raise TypeError("Question ID is invalid")
 
-        if qid in self.parent_survey.notification_hooks:
-            if qres in self.parent_survey.notification_hooks[qid]:
-                survey_response_notify.send(self.parent_survey,
-                                            response = self,
-                                            qid = qid,
-                                            qres = qres)
+        if q_id in self.parent_survey.notification_hooks:
+            for hook in q_res.split('###'):
+                if hook in self.parent_survey.notification_hooks[q_id]:
+                    survey_response_notify.send(self.parent_survey,
+                                                response = self,
+                                                qid = q_id,
+                                                qres = q_res)
+
+    
 
     @property
     def added(self):
         return self.metadata['started'] if 'started' in self.metadata else datetime.datetime.min
+
+    @property
+    def response_sm(self):
+        return {
+            'id': str(self),
+            'meta': self.metadata,
+            'parent_survey': self.parent_survey,
+            'responses': self.responses
+        }
 
 class ResponseSession(object):
 
@@ -432,7 +451,7 @@ class ResponseAggregation(object):
             row = [str(response), str(response.added)]
             for qid in self.survey.cols:
                 if qid in response.responses:
-                    row.append(response.responses[qid])
+                    row.append(response.responses[qid]['raw'])
                 else:
                     row.append(None)
             rows.append(row)
@@ -462,7 +481,7 @@ class ResponseAggregation(object):
                 if ps:
                     cols.append([str(response.id), str(response.added)])
                 if q[0] in response.responses:
-                    row.append(response.responses[q[0]])
+                    row.append(response.responses[q[0]]['raw'])
                 else:
                     row.append(None)
             rows.append(row)
@@ -477,17 +496,49 @@ class ResponseAggregation(object):
             "survey_id": str(self.survey)
         }
 
+    def csv(self):
+        # Columns
+        # Question ID | Question | Response ID 1 ... n
+        responses = Response.objects(parent_survey = self.survey)
+        questions = self.survey.questions
+
+        header = ['question_id']
+        for r in responses:
+            header.append(str(r))
+
+        yield ','.join(header)
+
+        for q in questions:
+            row = []
+            row.append(q[0])
+            row.append('"{0}"'.format(q[1]))
+            for r in responses:
+                row.append('"{0}"'.format(r.responses.get(q[0], '')['pretty']))
+            yield ','.join(row)
+
     @property
     def count(self):
         return Response.objects(parent_survey = self.survey).count()
 # Zurez
-import pymongo
 from bson.json_util import dumps
-def d(data):return json.loads(dumps(data))
 
-connection= pymongo.MongoClient('localhost', 27017)
-db = connection['qwer']
-survey= db.response
+def d(data):return json.loads(dumps(data))
+class Aspect(db.Document):
+    """docstring for Aspect"""
+
+    sector=db.StringField()
+    # food=db.StringField()
+    # service=db.StringField()
+    # price=db.StringField()
+    ambience=db.StringField()
+    value_for_money=db.StringField()
+    room_service=db.StringField()
+    cleanliness=db.StringField()
+    amenities=db.StringField()
+    overall=db.StringField()
+    survey_id=db.StringField()
+    provider=db.StringField()
+
 class IrapiData(object):
     """docstring for IrapiData"""
     def __init__(self, survey_id,start,end,aggregate):
@@ -495,10 +546,10 @@ class IrapiData(object):
         self.start=start
         self.end=end
         self.agg= aggregate
+
     def flag(self):
-        # raw= db.survey.find({"_id":ObjectId(self.sid)})
-        # js= d(raw)
         dat = SurveyUnit.objects(referenced = self.sid)
+        # return d(dat)
         js= [_.repr for _ in dat if not _.hidden]
         if len(js)!=0:
             children=[]
@@ -508,96 +559,173 @@ class IrapiData(object):
         else:
             return False
 
-    def get_multi_data(self,aList):
+    def get_multi_data(self, aList):
         js=[]
-        # return aLists
         for i in aList:
-            i= HashId.decode(i)
-            raw= db.response.find({"parent_survey":ObjectId(i)})
-            js= js +d(raw)
-        return js  
-    def get_child_data(self,survey_id):
-        raw= db.survey.find({"_id":ObjectId(self.sid)})
-        return d(raw)
-    def get_data(self):
-        dat = SurveyUnit.objects(referenced = self.sid)
-        # return [_.repr for _ in dat if not _.hidden]
-        flag= self.flag()
-        #return "ggg"
-        if flag==False:
-            raw= db.response.find({"parent_survey":ObjectId(self.sid)})
-            js= d(raw)
+            child_id= HashId.decode(i)
+            # print (child_id)
+            raw = Response.objects(parent_survey=child_id)
+            raw_temp=[]           
+            for i in raw:
+                temp_j=[]
+                temp_j.append(i.responses)
+                temp_j.append(i.metadata)
+                raw_temp.append(temp_j)
+            js= js + raw_temp
 
-            return js
+        return js
+
+    def get_child_data(self,survey_id):
+
+        raw=SurveyUnit.objects(id = survey_id)
+        return raw
+
+    def get_data(self):
+        dat = Survey.objects(id = self.sid)
+        flag= self.flag()
+
+        if flag==False:
+            raw= Response.objects(parent_survey=self.sid)
+            raw_temp=[]           
+            for i in raw:
+                temp_j=[]
+                temp_j.append(i.responses)
+                temp_j.append(i.metadata)
+                raw_temp.append(temp_j)
+            return raw_temp
         else:
             if self.agg=="true":
-                
+
                 "WIll return all the responses "
-                raw= db.response.find({"parent_survey":ObjectId(self.sid)})
-                js= d(raw)
-                js = js+ self.get_multi_data(flag)
+
+                raw = Response.objects(parent_survey = self.sid)
+                raw_temp=[]           
+                for i in raw:
+                    temp_j=[]
+                    temp_j.append(i.responses)
+                    temp_j.append(i.metadata)
+                    raw_temp.append(temp_j)
+
+                js = raw_temp + self.get_multi_data(flag)
                 return js
             else:
-                
-                raw= db.response.find({"parent_survey":ObjectId(self.sid)})
+
+                raw=Response.objects(parent_survey=self.sid)
                 js= d(raw)
                 return js
+
     def get_parent(self):
-        raw= db.survey.find({"_id":ObjectId(self.sid)})
-        js= d(raw)[0]
-        # return js['referenced']
-        if "referenced" in js:#Needs 0
-            return js['referenced']['$oid']
+
+        raw = Survey.objects(id = self.sid)
+        js = [_.repr_sm for _ in raw if not _.hidden]
+
+        if 'rootid' in js[0]:
+            return js[0]['rootid']
         else:
             return False
+
     def get_uuid_labels(self):
-        raw= db.survey.find({"_id":ObjectId(self.sid)})
-        
-        m= int(self.start)-1
-        n=int(self.end)
-        # return d(raw)[0]['structure']['fields'][a:b]
+        raw=Survey.objects(id = self.sid)
 
-        if "fields" in d(raw)[0]['structure']:
-            # raw= db.survey.find({"_id":ObjectId(self.sid)
-            a= d(db.survey.find({"_id":ObjectId(self.sid)}))[0]
+        m = int(self.start)-1
+        n = int(self.end)
+
+        if "fields" in d(raw[0].structure):
+            a= raw[0]
             if m==-1 and n==0:
-                return a['structure']['fields']
-            else: return a['structure']['fields'][m:n]
-            a= db.survey.find({"_id":ObjectId(self.sid)})
-            return d(a)[0]['structure']['fields'][m:n]
+                return a.structure['fields']
 
-        return d(db.survey.find({"_id":ObjectId(self.sid)}))
+            else:
+                return a.structure['fields'][m:n]
+
+        return d(raw[0].structure['fields']) # fallback
+    
     def survey_strct(self):
+        try:
+            raw=Survey.objects(id = HashId.decode(self.sid))
+        except:
+            raw=Survey.objects(id = self.sid)
 
-        raw= db.survey.find({"_id":ObjectId(self.sid)})
-        # raw= db.survey.find({"$and":[{"_id":ObjectId(self.sid)},{"structure.fields.field_options.options.label":"Room Service"}]})
-        # return d(raw)
-        js=d(raw)[0]['structure']['fields']
-        # js= d(raw)
+        js=raw[0]['structure']['fields']
+        # js=raw[0]
+ 
         return js
+
     def ret(self):
         try:
-            raw= db.survey.find({"_id":ObjectId(self.sid)})
+            raw=SurveyUnit.objects(referenced = self.sid)
             return d(raw)
         except:return "Errors"
+
+class Leaderboard(db.Document):
+    survey_ID = db.StringField()
+    competitors = db.DictField()
+
+class LeaderboardAggregator(object):
+    def __init__(self, survey_id):
+        self.sid = survey_id
+
+    def getLeaderboard(self):
+        raw_data = Leaderboard.objects(survey_ID = HashId.encode(self.sid))
+        if len(raw_data) == 0:
+            return None
+        ordered_leaderboard_list = []
+        unordered_leaderboard_dict = d(raw_data[0].competitors)
+
+        ordered_scores_list = sorted(unordered_leaderboard_dict, key = unordered_leaderboard_dict.get, reverse=True)
+
+        for i in ordered_scores_list:
+            ordered_leaderboard_list.append([i, unordered_leaderboard_dict[i]])
+
+        return ordered_leaderboard_list
+
+class Insights(db.Document):
+    survey_id = db.StringField()
+    insights = db.DictField()
+
+class InsightsAggregator(object):
+    def __init__(self, survey_id):
+        self.sid = survey_id
+
+    def getInsights(self):
+        raw_data = Insights.objects(survey_id = HashId.encode(self.sid))
+        if len(raw_data) == 0:
+            return None
+        unordered_insight_dict = d(raw_data[0].insights)
+        ordered_dates_list = sorted(unordered_insight_dict, key = lambda t: datetime.datetime.strptime(t, '%d-%m-%Y'), reverse=True)
+        ordered_insights_list = []
+        for i in ordered_dates_list:
+            ordered_insights_list.append([i, list(unordered_insight_dict[i].values())])
+        return ordered_insights_list
 
 class Dashboard(IrapiData):
     """docstring for Dashboard"""
     def __init__(self,survey_id):
         self.sid= survey_id
-    
-    
+
+class WordCloudD(db.Document):
+    """docstring for WordCloud"""
+    provider = db.StringField()
+    survey_id = db.StringField()
+    wc = db.DictField()
+
+class Reviews(db.Document):
+    provider = db.StringField()
+    survey_id = db.StringField()
+    rating = db.StringField()
+    review = db.StringField()
+    sentiment = db.StringField()
+    review_identifier=db.StringField(unique=True)
 
 class DataSort(object):
     """docstring for DataSort"""
 
     def __init__(self,survey_id,uuid,aggregate):
         self.sid= survey_id
-        # self.sid="56582299857c5616113814ae"
         self.uuid= uuid
         self.agg= aggregate
     def get_survey(self):
-        survey= db.survey.find({"_id":ObjectId(self.sid)}) #Got the particular survey.
+        survey=SurveyUnit.objects(referenced=self.sid)
         return d(survey)
     def get_response(self):
         response= db.response.find({"parent_survey":ObjectId(self.sid)})
@@ -622,9 +750,10 @@ class DataSort(object):
             i= HashId.decode(i)
             raw= db.response.find({"parent_survey":ObjectId(i)})
             js= js +d(raw)
-        return js  
+        return js
     def get_child_data(self,survey_id):
-        raw= db.survey.find({"_id":ObjectId(self.sid)})
+        # raw= db.survey.find({"_id":ObjectId(self.sid)})
+        raw=SurveyUnit.objects(referenced = self.sid)
         return d(raw)
     def get_data(self):
         dat = SurveyUnit.objects(referenced = self.sid)
@@ -652,12 +781,29 @@ class DataSort(object):
     def get_uuid_label(self):
         """labels: question text ; options ; etc"""
         #Extract the particular cid from the survey structure
-        raw_label=db.survey.find() #returns empty
-        raw_label=db.survey.find({"_id":ObjectId(self.sid)})
-        aList= d(raw_label)[0]['structure']['fields'] #A backup liseturn aList
+        # raw_label=db.survey.find() #returns empty
+        # raw_label=db.survey.find({"_id":ObjectId(self.sid)})
+        try:
+            raw_label=Survey.objects(id = HashId.decode(self.sid))
+        except:
+            raw_label=Survey.objects(id = self.sid)
+        # return d(raw_label)
+
+        aList= raw_label[0].structure['fields'] #A backup liseturn aList
+        # return aList
         # aList= d(raw_label)
         # return aList
         for i in aList:
             if i['cid']==self.uuid:
                 return i
                 # Zurez
+
+class Relation(db.Document):
+    """docstring for Relation"""
+    survey_id = db.StringField()
+    provider = db.StringField()
+    parent = db.StringField()
+
+class TimedDash(db.Document):
+    dash_value= db.StringField()
+    time= db.DateTimeField(default = datetime.datetime.now)

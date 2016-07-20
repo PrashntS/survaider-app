@@ -44,6 +44,34 @@ class SurveyResponseNotification extends Backbone.Model
   initialize: ->
     @template = Survaider.Templates['notification.survey.response.tile']
 
+  mark_finished: (e) ->
+    $.post "/api/notification/#{@get('id')}/resolve"
+    .done (dat) =>
+      @set
+        flagged: dat.flagged
+        collapse: !dat.flagged
+    .fail ->
+      swal
+        type: 'error'
+        title: 'Server error. Please try again.'
+
+  add_comment: (e) ->
+    msg = $(e.target.parentElement).find("[data-input=add_comment]").val()
+    if msg.length < 2
+      swal
+        type: 'error'
+        title: 'Please Enter a valid comment.'
+
+    $.post "/api/notification/#{@get('id')}/add_comment", {msg: msg}
+    .done (dat) =>
+      @set
+        payload: dat.payload
+    .fail ->
+      swal
+        type: 'error'
+        title: 'Server error. Please try again.'
+
+
 class NotificationCollection extends Backbone.Collection
   model: (attr, options) ->
     switch attr.type
@@ -51,6 +79,7 @@ class NotificationCollection extends Backbone.Collection
         attr.collapse = !attr.flagged
         return new SurveyTicketNotification attr, options
       when 'SurveyResponseNotification'
+        attr.collapse = !attr.flagged
         return new SurveyResponseNotification attr, options
 
   comparator: (model) ->
@@ -69,7 +98,9 @@ class NotificationView extends Backbone.View
     return @
 
   notificationaction: (e) ->
+    console.log e
     func = $(e.target).attr("data-action")
+    console.log func
     @model[func](e)
 
 class NotificationDock extends Backbone.View

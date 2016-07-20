@@ -31,9 +31,9 @@
               stop: function (event, ui) {
                 var index = ui.handle.parentElement.getAttribute('data-question-index'),
                     id = ui.handle.parentElement.getAttribute('data-question-id');
-                    console.log(index);
-                    console.log(id);
-                    console.log();
+                    // console.log(index);
+                    // console.log(id);
+                    // console.log();
                 $scope.changeInQuestion(index, id);
                 $scope.$apply();
               }
@@ -226,12 +226,14 @@
         return false;
       }
 
-      console.log(question);
+       // console.log(question);
 
       checkTheNumberOfRemainingQuestions();
 
 
       //Post a request to server for every question that is answered
+       console.log("000000000000");
+      
       $http.post(payload_update_uri, JSON.stringify(question.generateResponse()));
 
       var index = -1;
@@ -500,10 +502,13 @@
 
                  break;
                case "single_choice":
+
                  var tempQuestion = new SingleChoiceQuestion(question.label, question.required, question.cid, question.field_type, question.next, question.field_options.description);
 
                  for (var i = 0; i < question.field_options.options.length; i++) {
+                  // console.log(question.field_options.options[i]);
                    tempQuestion.insertOption(question.field_options.options[i]);
+                    
                  }
 
                  $scope.questions.push(tempQuestion);
@@ -550,7 +555,7 @@
         $http.get(payload_update_uri + '?new=true')
               .success(function(data, status, header, config){
          
-                  console.log(data);
+                  // console.log(data);
          
               }
           );
@@ -611,7 +616,7 @@
          $scope.changeInQuestion = function(questionIndex, questionId){
            var question = $scope.questions[questionIndex],
            questionElement = $('#question-' + questionId);
-           console.log(question);
+           // console.log(question);
 
            if (question.checkIfCompleted()) {
              questionElement.addClass('completed-question');
@@ -647,8 +652,8 @@
           // $http.get('survey/' + s_id + '/response/finish'); <--- THIS IS NOT CORRECT.
            $http.get(payload_update_uri + '?new=false')
               .success(function(data, status, header, config){
-
-                  console.log(data);
+                 
+                  // console.log(data);
 
               }
           );
