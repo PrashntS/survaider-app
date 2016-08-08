@@ -284,12 +284,16 @@
     };
     Header.prototype.addMinimized = function() {
         if (this.options.autoresize && !this.$element.hasClass('affix-top'))
-            if (!this.$element.hasClass(this.options.minimizedClass))
+           {  if (!this.$element.hasClass(this.options.minimizedClass))
                 this.$element.addClass(this.options.minimizedClass);
+                this.$element.addClass(this.options.darkClass);
+            }
     };
     Header.prototype.removeMinized = function() {
         if (this.options.autoresize || this.$element.hasClass('affix-top'))
-            this.$element.removeClass(this.options.minimizedClass);
+            { this.$element.removeClass(this.options.minimizedClass);
+              this.$element.addClass(this.options.darkClass);
+            }
     };
 
     function Plugin(option) {
@@ -312,7 +316,11 @@
     $.fn.header.defaults = {
         duration: 350,
         autoresize: false,
-        minimizedClass: 'minimized'
+        minimizedClass: 'minimized',
+        transparentlightClass: 'transparent-light',
+        transparentdarkClass: 'transparent-dark',
+        darkClass: 'dark'
+        
     }
 
     // HEADER NO CONFLICT

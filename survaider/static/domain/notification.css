@@ -19,22 +19,22 @@ body {
   min-height: 100vh;
   margin-bottom: 100px;
 }
-@media (min-width: 1366px) {
-  body {
-    width: 1366px;
-    margin: 0 auto;
-  }
+body div.notiText {
+  padding: 4px 0px 2px 5px;
 }
-@media (max-width: 1365px) {
-  body {
-    width: 1024px;
-    margin: 0 auto;
-  }
+body div.comments {
+  padding: 2px 0px 1px 8px;
 }
-@media (max-width: 1023px) {
-  body {
-    padding: 0 10%;
-  }
+body input.text {
+  border: 1px solid grey;
+  border-radius: 6px;
+  width: 400px;
+}
+body div.comment {
+  background-color: #EDE5E3;
+  border: 1px solid grey;
+  border-radius: 4px;
+  max-width: 50%;
 }
 
 header {
@@ -638,7 +638,7 @@ button.create {
   }
 }
 div.deck {
-  padding-left: 20px;
+  padding: 20px;
 }
 div.deck ul {
   list-style: none;
@@ -734,24 +734,6 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   font-weight: 900;
   color: white;
-}
-
-.sv-header-nav {
-  position: absolute;
-  top: 50%;
-  -webkit-transform: translate(0, -50%);
-  -moz-transform: translate(0, -50%);
-  -ms-transform: translate(0, -50%);
-  -o-transform: translate(0, -50%);
-  transform: translate(0, -50%);
-  right: 2em;
-}
-.sv-header-nav a {
-  display: block;
-  border: 1px solid #8e8e8e;
-  padding: 0.5em 1em;
-  background-color: #7EFFE2;
-  color: #9B9B9B;
 }
 
 /*--------------------------------------------------- */
