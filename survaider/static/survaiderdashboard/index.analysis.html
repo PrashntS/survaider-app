@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="no-js" lang="" ng-app="SurvaiderDashboard" ng-controller="MainController">
+<html class="no-js" lang="" ng-app="SurvaiderDashboard">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
@@ -11,13 +11,9 @@
         <!-- Place favicon.ico in the root directory -->
 
         <link rel="stylesheet" href="/static/survaiderdashboard/css/style.css" media="screen" title="no title" charset="utf-8">
-        <link rel="stylesheet" href="/static/survaiderdashboard/css/angular-chart.css" media="screen" title="no title" charset="utf-8">
-        <link rel="stylesheet" href="/static/survaiderdashboard/css/angular-material.min.css">
-
-        <link rel="stylesheet" href="/static/survaiderdashboard/css/bootstrap-table-only.css">
 
     </head>
-    <body ng-app="app">
+    <body>
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
@@ -33,12 +29,8 @@
             </div>
 
             <div class="sv-header-nav">
-              <a href="/notification/" onclick="window.location.reload(true);" class="notification" style="padding-right: ">
-                <img src="/static/survaiderdashboard/images/globe.png" alt="Notifications" />
-              </a>
-
               <h3>
-                <a href="/logout" onclick="window.location.reload(true);">Logout</a>
+                <a href="/#/overallAnalytics">Overall Analytics</a>
               </h3>
             </div>
           </header>
@@ -48,17 +40,16 @@
             <div class="sv-sidebar-nav">
               <ul>
                 <li>
-                  <a href="#/survey/GMzwApkX24lQnvLNwBO/analysis">Data</a>
-                </li>
-
-                <!-- <li ng-show="isEditSurveyEnabled">
-                  <a ng-href="/survey/s:{{ParentId}}/edit">Edit Survey</a>
-                </li> -->
-                <li>
-                  <a ng-click="showModal($event, 'shareSurvey')">Share</a>
+                  <a href="#">Data</a>
                 </li>
                 <li>
-                  <a ng-click="showModal($event, 'settings')">Settings</a>
+                  <a href="#">Edit Survey</a>
+                </li>
+                <li>
+                  <a href="#">Share</a>
+                </li>
+                <li>
+                  <a href="#">Settings</a>
                 </li>
               </ul>
             </div>
@@ -74,33 +65,18 @@
         </main>
 
 
-
         <!-- Javascripts Includes -->
 
         <!-- Libraries -->
-        <script src="/static/survaiderdashboard/js/vendor/uritemplat.js" charset="utf-8"></script>
+        <script src="/static/survaiderdashboard/js/vendor/uri-template.js" charset="utf-8"></script>
         <script src="/static/survaiderdashboard/js/vendor/angular-1.4.7/angular.min.js" charset="utf-8"></script>
         <script src="/static/survaiderdashboard/js/vendor/angular-1.4.7/angular-route.min.js" charset="utf-8"></script>
         <script src="/static/survaiderdashboard/js/vendor/angular-1.4.7/angular-animate.min.js" charset="utf-8"></script>
-
-        <script src="/static/survaiderdashboard/js/vendor/angular-1.4.7/angular-aria.min.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/vendor/angular-1.4.7/angular-messages.min.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/vendor/angular-material.min.js"></script>
-
-        <script src="/static/survaiderdashboard/js/vendor/chart.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/vendor/angular-chart.js" charset="utf-8"></script>
-
-        <!-- home.html -->
-        <script src="/static/survaiderdashboard/js/vendor/high-charts/highcharts.js"></script>
-        <script src="/static/survaiderdashboard/js/vendor/high-charts/exporting.js"></script>
 
         <!-- App::Models -->
         <script src="/static/survaiderdashboard/js/app/models/question.js" charset="utf-8"></script>
         <script src="/static/survaiderdashboard/js/app/models/feature.js" charset="utf-8"></script>
         <script src="/static/survaiderdashboard/js/app/models/unit.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/app/models/hotelRating.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/app/models/leaderboardEntry.js" charset="utf-8"></script>
-        <script src="/static/survaiderdashboard/js/app/models/insight.js" charset="utf-8"></script>
 
         <!-- App::Application -->
         <script src="/static/survaiderdashboard/js/app/app.js" charset="utf-8"></script>

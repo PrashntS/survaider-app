@@ -84,70 +84,6 @@
       return this.template = Survaider.Templates['notification.survey.response.tile'];
     };
 
-    SurveyResponseNotification.prototype.mark_finished = function(e) {
-      return $.post("/api/notification/" + (this.get('id')) + "/resolve").done((function(_this) {
-        return function(dat) {
-          return _this.set({
-            flagged: dat.flagged,
-            collapse: !dat.flagged
-          });
-        };
-      })(this)).fail(function() {
-        return swal({
-          type: 'error',
-          title: 'Server error. Please try again.'
-        });
-      });
-    };
-
-    SurveyResponseNotification.prototype.add_comment = function(e) {
-      var msg;
-      msg = $(e.target.parentElement).find("[data-input=add_comment]").val();
-      if (msg.length < 2) {
-        swal({
-          type: 'error',
-          title: 'Please Enter a valid comment.'
-        });
-      }
-      return $.post("/api/notification/" + (this.get('id')) + "/add_comment", {
-        msg: msg
-      }).done((function(_this) {
-        return function(dat) {
-          return _this.set({
-            payload: dat.payload
-          });
-        };
-      })(this)).fail(function() {
-        return swal({
-          type: 'error',
-          title: 'Server error. Please try again.'
-        });
-      });
-    };
-
-    SurveyResponseNotification.prototype.expand = function(e) {
-      return this.set({
-        collapse: !this.get('collapse')
-      });
-    };
-
-    SurveyResponseNotification.prototype.load_response = function(e) {
-      var uri;
-      uri = "/api/survey/" + (this.get('survey').id) + "/response/" + (this.get('response'));
-      return $.getJSON(uri).done(function(data) {
-        var template;
-        template = Survaider.Templates['notification.survey.response.doc'];
-        return swal({
-          html: true,
-          title: "Responses for " + data.parent_survey.meta.name,
-          text: template({
-            dat: data
-          }),
-          confirmButtonText: 'Close'
-        });
-      });
-    };
-
     return SurveyResponseNotification;
 
   })(Backbone.Model);
@@ -165,7 +101,6 @@
           attr.collapse = !attr.flagged;
           return new SurveyTicketNotification(attr, options);
         case 'SurveyResponseNotification':
-          attr.collapse = !attr.flagged;
           return new SurveyResponseNotification(attr, options);
       }
     };
@@ -203,7 +138,7 @@
 
     NotificationView.prototype.notificationaction = function(e) {
       var func;
-      func = $(e.target).data("action");
+      func = $(e.target).attr("data-action");
       return this.model[func](e);
     };
 

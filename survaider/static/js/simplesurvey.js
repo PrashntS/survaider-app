@@ -41604,8 +41604,7 @@ ShortTextQuestion.prototype.resetResponse = function(){
 ShortTextQuestion.prototype.generateResponse = function(){
   return {
     q_id: this.id,
-    q_res: this.response,
-    q_res_plain : this.response
+    q_res: this.response
   }
 }
 ;
@@ -41662,8 +41661,7 @@ YesNoQuestion.prototype.resetResponse = function(){
 YesNoQuestion.prototype.generateResponse = function(){
   return {
     q_id: this.id,
-    q_res: 'a_' + this.response,
-    q_res_plain: this.options[this.response-1].label
+    q_res: 'a_' + this.response
   }
 }
 ;
@@ -41717,11 +41715,9 @@ SingleChoiceQuestion.prototype.resetResponse = function(){
 
 
 SingleChoiceQuestion.prototype.generateResponse = function(){
-  // console.log(this.options[this.response-1].label);
   return {
     q_id: this.id,
-    q_res: 'a_' + this.response,
-    q_res_plain: this.options[this.response-1].label
+    q_res: 'a_' + this.response
   }
 }
 ;
@@ -41780,8 +41776,7 @@ GroupRatingQuestion.prototype.checkIfCompleted = function(){
 GroupRatingQuestion.prototype.generateResponse = function(){
   var response = {
     q_id: this.id,
-    q_res: [],
-    q_res_plain : []
+    q_res: []
   }
 
 
@@ -41789,16 +41784,12 @@ GroupRatingQuestion.prototype.generateResponse = function(){
       delimeter1 = '##';
       delimeter2 = '###';
 
-  var temp2 = []
-
   for (var i = 0; i < this.subparts.length; i++) {
     temp.push('a_' + (i + 1) + delimeter1 + (this.subparts[i].rating));
-    temp2.push(this.subparts[i].label + delimeter1 + this.subparts[i].rating);
   }
 
 
   response.q_res = temp.join(delimeter2).toLocaleString();
-  response.q_res_plain = temp2.join(delimeter2).toLocaleString();
 
   return response;
 }
@@ -41851,25 +41842,20 @@ RankingQuestion.prototype.resetResponse = function(){
 RankingQuestion.prototype.generateResponse = function(){
   var response = {
     q_id: this.id,
-    q_res: [],
-    q_res_plain : []
+    q_res: []
   }
 
 
   var temp = [],
-  delimeter1 = '##';
-  delimeter2 = '###';
-  var temp2 = [];
+      delimeter1 = '##';
+      delimeter2 = '###';
 
   for (var i = 0; i < this.subparts.length; i++) {
-    // temp.push('a_' + (i + 1) + delimeter1 + (this.subparts[i].rank+1));
     temp.push('a_' + (i + 1) + delimeter1 + (this.subparts[i].rank+1));
-    temp2.push(this.subparts[i].label + delimeter1 + (this.subparts[i].rank+1));
   }
 
 
   response.q_res = temp.join(delimeter2).toLocaleString();
-  response.q_res_plain = temp2.join(delimeter2).toLocaleString();
 
   return response;
 }
@@ -41909,8 +41895,7 @@ RatingQuestion.prototype.resetResponse = function(){
 RatingQuestion.prototype.generateResponse = function(){
   return {
     q_id: this.id,
-    q_res: 'a_'+this.response,
-    q_res_plain : this.response
+    q_res: this.response
   }
 }
 ;
@@ -41978,24 +41963,20 @@ MultipleChoiceQuestion.prototype.resetResponse = function(){
 MultipleChoiceQuestion.prototype.generateResponse = function(){
   var response = {
     q_id: this.id,
-    q_res: "",
-    q_res_plain : ""
+    q_res: ""
   }
 
   var temp = [],
       delimeter = '###';
-  var temp2 = [];
 
   for (var i = 0; i < this.choices.length; i++) {
     if (this.choices[i].checked) {
       temp.push('a_' + (i + 1));
-      temp2.push(this.choices[i].label);
     }
   }
 
 
   response.q_res = temp.join(delimeter).toLocaleString();
-  response.q_res_plain = temp2.join(delimeter).toLocaleString();
 
   return response;
 }
@@ -42038,8 +42019,7 @@ LongTextQuestion.prototype.resetResponse = function(){
 LongTextQuestion.prototype.generateResponse = function(){
   return {
     q_id: this.id,
-    q_res: this.response,
-    q_res_plain : this.response
+    q_res: this.response
   }
 }
 ;
@@ -42076,9 +42056,9 @@ LongTextQuestion.prototype.generateResponse = function(){
               stop: function (event, ui) {
                 var index = ui.handle.parentElement.getAttribute('data-question-index'),
                     id = ui.handle.parentElement.getAttribute('data-question-id');
-                    // console.log(index);
-                    // console.log(id);
-                    // console.log();
+                    console.log(index);
+                    console.log(id);
+                    console.log();
                 $scope.changeInQuestion(index, id);
                 $scope.$apply();
               }
@@ -42271,7 +42251,7 @@ LongTextQuestion.prototype.generateResponse = function(){
         return false;
       }
 
-      // console.log(question);
+      console.log(question);
 
       checkTheNumberOfRemainingQuestions();
 
@@ -42595,7 +42575,7 @@ LongTextQuestion.prototype.generateResponse = function(){
         $http.get(payload_update_uri + '?new=true')
               .success(function(data, status, header, config){
          
-                  // console.log(data);
+                  console.log(data);
          
               }
           );
@@ -42656,7 +42636,7 @@ LongTextQuestion.prototype.generateResponse = function(){
          $scope.changeInQuestion = function(questionIndex, questionId){
            var question = $scope.questions[questionIndex],
            questionElement = $('#question-' + questionId);
-           // console.log(question);
+           console.log(question);
 
            if (question.checkIfCompleted()) {
              questionElement.addClass('completed-question');
@@ -42693,7 +42673,7 @@ LongTextQuestion.prototype.generateResponse = function(){
            $http.get(payload_update_uri + '?new=false')
               .success(function(data, status, header, config){
 
-                  // console.log(data);
+                  console.log(data);
 
               }
           );
